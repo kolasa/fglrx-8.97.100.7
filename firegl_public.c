@@ -2169,7 +2169,17 @@ int ATI_API_CALL KCL_MEM_ReleaseLinearAddrInterval(unsigned long addr, unsigned 
 {
     int retcode = 0;
 
-    down_write(&current->mm->mmap_sem);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+#ifdef FGL_LINUX_RHEL_MUNMAP_API
+	retcode = vm_munmap(addr,
+                        len,
+                        1);
+#else
+    retcode = vm_munmap(addr,
+                        len);
+#endif
+#else
+	down_write(&current->mm->mmap_sem);
 #ifdef FGL_LINUX_RHEL_MUNMAP_API
     retcode = do_munmap(current->mm,
                         addr,
@@ -2179,8 +2189,9 @@ int ATI_API_CALL KCL_MEM_ReleaseLinearAddrInterval(unsigned long addr, unsigned 
     retcode = do_munmap(current->mm,
                         addr,
                         len);
-#endif                        
     up_write(&current->mm->mmap_sem);
+#endif
+#endif
     return retcode;
 }
 
