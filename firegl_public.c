@@ -222,6 +222,11 @@
 #define preempt_enable()
 #endif
 
+// VM_RESERVED is removed from 3.7.0
+#ifndef VM_RESERVED
+#define VM_RESERVED				VM_DONTEXPAND | VM_DONTDUMP
+#endif
+
 // ============================================================
 /* globals */
 
