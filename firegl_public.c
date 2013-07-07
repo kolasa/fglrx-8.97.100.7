@@ -2147,10 +2147,13 @@ unsigned long ATI_API_CALL KCL_MEM_AllocLinearAddrInterval(
 
     flags = MAP_SHARED;
     prot  = PROT_READ|PROT_WRITE;
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+    vaddr = (void *) vm_mmap(file, 0, len, prot, flags, pgoff);
+#else
     down_write(&current->mm->mmap_sem);
     vaddr = (void *) do_mmap(file, 0, len, prot, flags, pgoff);
     up_write(&current->mm->mmap_sem);
+#endif
     if (IS_ERR(vaddr))
        return 0;
     else
