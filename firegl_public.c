@@ -186,8 +186,14 @@
 #include <linux/string.h>
 #include <linux/gfp.h>
 #include <linux/swap.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,2,0)
+#include "asm/fpu/api.h"
+#else
 #include "asm/i387.h"
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0)
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,2,0)
+#include <asm/fpu/internal.h>
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0)
 #include <asm/fpu-internal.h>
 #endif
 
@@ -1540,6 +1546,7 @@ void ATI_API_CALL KCL_SIGNAL_UnblockAll(void)
     unblock_all_signals();
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,2,0)
 #if defined(__i386__) 
 #ifndef __HAVE_ARCH_CMPXCHG
 static inline 
@@ -1573,12 +1580,15 @@ unsigned long __fgl_cmpxchg(volatile void *ptr, unsigned long old,
 #elif defined(__alpha__)
 todo !!!
 #endif
+#endif
 
 unsigned long ATI_API_CALL kcl__cmpxchg(volatile void *ptr, unsigned long old,
          unsigned long new, int size)
 {
 #ifndef __HAVE_ARCH_CMPXCHG
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,2,0)
     return __fgl_cmpxchg(ptr,old,new,size);
+#endif
 #else
     /* On kernel version 2.6.34 passing a variable or unsupported size
      * argument to the __cmpxchg macro causes the default-clause of a
@@ -5986,10 +5996,12 @@ void ATI_API_CALL KCL_fpu_begin(void)
      */
     struct task_struct *cur_task = current;
     preempt_disable();
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,2,0)
     /* The thread structure is changed with the commit below for kernel 3.3:
      * https://github.com/torvalds/linux/commit/7e16838d94b566a17b65231073d179bc04d590c8
      */
+    if (cur_task->thread.fpu.fpregs_active)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
     if (cur_task->thread.fpu.has_fpu)
 #else
     if (cur_task->thread.has_fpu)
