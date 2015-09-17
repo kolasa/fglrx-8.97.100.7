@@ -585,7 +585,12 @@ static int firegl_major_proc_read(struct seq_file *m, void* data)
 
     len = snprintf(buf, request, "%d\n", major);
 #else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,3,0)
+	int len = 0;
+	seq_printf(m, "%d\n", major);
+#else
 	int len = seq_printf(m, "%d\n", major);
+#endif
 #endif
     KCL_DEBUG1(FN_FIREGL_PROC, "return len=%i\n",len);
 
@@ -1605,6 +1610,7 @@ unsigned long ATI_API_CALL kcl__cmpxchg(volatile void *ptr, unsigned long old,
     default: return old;
     }
 #endif
+   return old;
 }
 
 /*****************************************************************************/
